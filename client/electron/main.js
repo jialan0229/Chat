@@ -8,9 +8,9 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 // 创建浏览器窗口时，调用这个函数。
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 1920,
-    height: 1080,
-    title: '叫号系统',
+    width: 1200,
+    height: 800,
+    title: 'webscoket聊天室',
     // icon: join(__dirname, '../public/logo.png'),
     webPreferences: {
       // 书写渲染进程中的配置
