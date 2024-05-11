@@ -1,5 +1,8 @@
 const md5 = require('md5');
+const jwt = require('jsonwebtoken');
 const { dbQuery } = require('../../models/dbQuery');
+
+const JWT_SECRET_KEY = 'your-secret-key';
 
 const login = async (req, res) => {
   const { username, password } = req.body;
@@ -13,16 +16,21 @@ const login = async (req, res) => {
     return res.json({
       code: 1001,
       data: '',
-      message: '用户名或密码错误'
+      msg: '用户名或密码错误'
     })
   }else {
+    const payload = {
+      ...results[0]
+    }
+
+    const token = jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '1h' });
     res.json({
       code: 0,
       data: {
-        username,
-        password
+        ...results[0],
+        token
       },
-      message: '登录成功'
+      msg: '登录成功'
     });
   }
 }
@@ -33,7 +41,7 @@ const register = async (req, res) => {
     return res.json({
       code: 4000,
       data: null,
-      message: '参数错误'
+      msg: '参数错误'
     });
   }
   try {
@@ -44,7 +52,7 @@ const register = async (req, res) => {
 			return res.json({
         code: 1003,
         data: null,
-        message: '用户名或手机号已注册'
+        msg: '用户名或手机号已注册'
       });
 		}
 
@@ -67,13 +75,13 @@ const register = async (req, res) => {
     res.json({
       code: 0,
       data,
-      message: '注册成功'
+      msg: '注册成功'
     })
   } catch {
     res.json({
       code: 500,
       data: null,
-      message: '服务器内部错误'
+      msg: '服务器内部错误'
     });
   }
 }

@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { message } from 'ant-design-vue';
 
-const baseURL = 'http://127.0.0.1:9000/';
+import { baseURL } from '@/config';
+import { getToken } from './auth';
+
 // 创建一个axios实例
 const instance = axios.create({
   baseURL,
@@ -17,7 +19,12 @@ const instance = axios.create({
 // 请求拦截器
 instance.interceptors.request.use(config => {
   // 在发送请求之前做些什么
-  // config.headers.Authorization = 'Bearer '; // 假设你需要在每个请求上附加一个令牌
+  
+  const token = getToken();
+  if(token) {
+    config.headers.Authorization = token;
+  }
+
   return config;
 });
 
@@ -25,12 +32,15 @@ instance.interceptors.request.use(config => {
 instance.interceptors.response.use(
   response => {
     // 任意响应都会经过这里
-    const { code } = response.data;
+    const { code, msg } = response.data;
     if(code == 0) {
-      message.success(response.data.message);
+      return response.data;
+    }else if(code == 500) {
+      message.error(msg);
     }else {
-      message.warning(response.data.message);
+      message.warning(msg);
     }
+
     return response.data;
   },
   error => {

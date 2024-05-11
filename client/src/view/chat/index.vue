@@ -1,5 +1,8 @@
 <script setup>
-import { reactive } from 'vue';
+import { ref, reactive, onMounted, nextTick } from 'vue';
+import { _getList } from '@/server/message.js';
+import { formatTime } from '@/utils';
+import { baseURLWs } from '@/config';
 
 const chatState = reactive({
   personList: [
@@ -19,66 +22,82 @@ const chatState = reactive({
     }
   ],
   personInfo: {},
-  messages: {
-    id: 1,
-    name: 'Dog Woofson',
-    time: 'Today, 3:38 AM',
-    msg: [
-      {
-        type: 0,
-        text: 'Hey human!',
-      },
-      {
-        type: 1,
-        text: 'I know! I\'ll call the police!',
-      },
-      {
-        type: 1,
-        text: 'What happened?',
-      },
-      {
-        type: 0,
-        text: 'Umm... Someone took a shit in the hallway.',
-      },
-      {
-        type: 1,
-        text: 'The dog is gone.',
-      },
-    ]
-  }
+  messages: []
 })
+const chatRef = ref(null);
+let socket = null;
+
+onMounted(() => {
+  getList();
+  // initWebSocket();
+})
+
+async function setChatScrollTop() {
+  await nextTick()
+  chatRef.value.scrollTop = chatRef.value.scrollHeight;
+}
+
+async function getList() {
+  const res = await _getList({ userId: 1 })
+  if (res.code == 0) {
+    res.data.forEach(i => {
+      i.avatar = 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/thomas.jpg';
+      i.lastMsg = 'I was wondering...'
+      i.updated_at = formatTime(i.updated_at)
+    })
+
+    chatState.personList = res.data;
+  }
+}
 
 function setAciveChat(item) {
   chatState.personInfo = item;
-  const message = {
-    id: 1,
-    name: item.name,
-    time: 'Today, 3:38 AM',
-    msg: [
-      {
-        type: 0,
-        text: 'Hey human!',
-      },
-      {
-        type: 1,
-        text: 'I know! I\'ll call the police!',
-      },
-      {
-        type: 1,
-        text: 'What happened?',
-      },
-      {
-        type: 0,
-        text: 'Umm... Someone took a shit in the hallway.',
-      },
-      {
-        type: 1,
-        text: 'The dog is gone.',
-      },
-    ]
+  initWebSocket();
+  setChatScrollTop();
+}
+
+function initWebSocket() {
+  if(socket) {
+    socket.close();
+    socket = null;
   }
 
-  chatState.messages = message;
+  socket = new WebSocket(`${baseURLWs}/message/chat/list?sender_id=${1}&room=${chatState.personInfo.room}`);
+
+  socket.onopen = () => {
+    console.log('webSocket 连接成功');
+  }
+
+  socket.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if(data instanceof Array) {
+      chatState.messages = data;
+    } else {
+      chatState.messages.push(data)
+    }
+
+    setChatScrollTop();
+  }
+
+  socket.onerror = (error) => {
+    console.log('WebSocket Error:', error);
+  };
+
+}
+
+function handleSend () {
+  if(!chatState.content) return;
+
+  const { user_id, friend_id, room } = chatState.personInfo;
+  const sendMasgges = {
+    sender_id: friend_id,
+    receiver_id: user_id,
+    room,
+    content: chatState.content
+  };
+
+  socket.send(JSON.stringify(sendMasgges));
+  chatState.content = ''
 }
 </script>
 
@@ -95,31 +114,32 @@ function setAciveChat(item) {
             <li :class="['person', chatState.personInfo.id === item.id && 'active']"
               v-for="item in chatState.personList" @click="setAciveChat(item)" data-chat="person1">
               <img :src="item.avatar" alt="" />
-              <span class="name">{{ item.name }}</span>
-              <span class="time">{{ item.time }}</span>
-              <span class="preview">{{ item.preview }}</span>
+              <span class="name">{{ item.remark }}</span>
+              <span class="time">{{ item.updated_at }}</span>
+              <span class="preview">{{ item.lastMsg }}</span>
             </li>
           </ul>
         </div>
         <div class="right">
           <div class="main">
-            <div class="top"><span>To: <span class="name">{{ chatState.messages.name }}</span></span></div>
-              <div class="chat active-chat">
-                <div class="conversation-start">
-                  <span>{{ chatState.messages.time }}</span>
-                </div>
-                <template v-for="(item, index) in chatState.messages.msg">
-                  <div :class="['bubble', !item.type ? 'you': 'me']" :style="{'--animationDuration': ((index + 1) * 0.15) + 's' }">
-                    {{ item.text }}
-                  </div>
-                </template>
+            <div class="top"><span>To: <span class="name">{{ chatState.personInfo.remark }}</span></span></div>
+            <div class="chat active-chat" ref="chatRef">
+              <template v-for="(item, index) in chatState.messages">
+              <div class="conversation-start">
+                <span>{{ formatTime(item.created_at) }}</span>
               </div>
+                <div :class="['bubble', item.sender_id == 1 ? 'me' : 'you']"
+                  :style="{ '--animationDuration': ((index + 1) * 0.15) + 's' }">
+                  {{ item.content }}
+                </div>
+              </template>
+            </div>
           </div>
           <div class="write">
             <a href="javascript:;" class="write-link attach"></a>
-            <input type="text" />
+            <input v-model="chatState.content" @keyup.enter="handleSend" type="text" />
             <a href="javascript:;" class="write-link smiley"></a>
-            <a href="javascript:;" class="write-link send"></a>
+            <a href="javascript:;" class="write-link send" @click="handleSend"></a>
           </div>
         </div>
       </div>
@@ -325,189 +345,199 @@ function setAciveChat(item) {
       width: 62.4%;
       height: 100%;
 
-      .top {
+      .main {
         width: 100%;
-        height: 47px;
-        padding: 15px 29px;
-        background-color: #eceff1;
+        height: 100%;
 
-        span {
-          font-size: 15px;
-          color: @grey;
+        .top {
+          width: 100%;
+          height: 47px;
+          padding: 15px 29px;
+          background-color: #eceff1;
+  
+          span {
+            font-size: 15px;
+            color: @grey;
+          }
+  
+          span .name {
+            color: @dark;
+            font-family: "Source Sans Pro", sans-serif;
+            font-weight: 600;
+          }
         }
-    
-        span .name {
-          color: @dark;
-          font-family: "Source Sans Pro", sans-serif;
-          font-weight: 600;
-        }
-      }
-
-      .chat {
-        position: relative;
-        display: none;
-        overflow: hidden;
-        padding: 0 35px 92px;
-        border-width: 1px 1px 1px 0;
-        border-style: solid;
-        border-color: @light;
-        height: calc(100% - 48px);
-        justify-content: flex-end;
-        flex-direction: column;
-
-        &.active-chat {
-          display: block;
-          display: flex;
-
-          .bubble {
-            transition-timing-function: cubic-bezier(0.4, -0.04, 1, 1);
-            animation-duration: var(--animationDuration);
+  
+        .chat {
+          position: relative;
+          display: none;
+          overflow: hidden;
+          padding: 0 35px;
+          border-width: 1px 1px 1px 0;
+          border-style: solid;
+          border-color: @light;
+          height: calc(100% - 120px);
+          justify-content: flex-end;
+          flex-direction: column;
+          overflow: auto;
+  
+          &.active-chat {
+            display: block;
+            display: flex;
+  
+            .bubble {
+              transition-timing-function: cubic-bezier(0.4, -0.04, 1, 1);
+              animation-duration: var(--animationDuration);
+            }
           }
         }
       }
+
+
+      .write {
+        position: absolute;
+        bottom: 15px;
+        left: 30px;
+        height: 42px;
+        padding-left: 8px;
+        border: 1px solid @light;
+        background-color: #eceff1;
+        width: calc(100% - 58px);
+        border-radius: 5px;
+
+        input {
+          font-size: 16px;
+          float: left;
+          width: 347px;
+          height: 40px;
+          padding: 0 10px;
+          color: @dark;
+          border: 0;
+          outline: none;
+          background-color: #eceff1;
+          font-family: "Source Sans Pro", sans-serif;
+          font-weight: 400;
+        }
+  
+        .write-link.attach:before {
+          display: inline-block;
+          float: left;
+          width: 20px;
+          height: 42px;
+          content: "";
+          background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/attachment.png");
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+  
+        .write-link.smiley:before {
+          display: inline-block;
+          float: left;
+          width: 20px;
+          height: 42px;
+          content: "";
+          background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/smiley.png");
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+  
+        .write-link.send:before {
+          display: inline-block;
+          float: left;
+          width: 20px;
+          height: 42px;
+          margin-left: 11px;
+          content: "";
+          background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/send.png");
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+      }
+
+
+      .bubble {
+        font-size: 16px;
+        position: relative;
+        display: inline-block;
+        clear: both;
+        margin-bottom: 8px;
+        padding: 13px 14px;
+        vertical-align: top;
+        border-radius: 5px;
+
+        &:before {
+          position: absolute;
+          top: 19px;
+          display: block;
+          width: 8px;
+          height: 6px;
+          content: " ";
+          transform: rotate(29deg) skew(-35deg);
+        }
+  
+        &.you {
+          float: left;
+          color: @white;
+          background-color: @blue;
+          align-self: flex-start;
+          -webkit-animation-name: slideFromLeft;
+          animation-name: slideFromLeft;
+        }
+  
+        &.you:before {
+          left: -3px;
+          background-color: @blue;
+        }
+  
+        &.me {
+          float: right;
+          color: @dark;
+          background-color: #eceff1;
+          align-self: flex-end;
+          -webkit-animation-name: slideFromRight;
+          animation-name: slideFromRight;
+        }
+  
+        &.me:before {
+          right: -3px;
+          background-color: #eceff1;
+        }
+      }
+
+
+      .conversation-start {
+        position: relative;
+        width: 100%;
+        margin-bottom: 27px;
+        text-align: center;
+
+        span {
+          font-size: 14px;
+          display: inline-block;
+          color: @grey;
+          &:before,
+          &:after {
+            position: absolute;
+            top: 10px;
+            display: inline-block;
+            width: 30%;
+            height: 1px;
+            content: "";
+            background-color: @light;
+          }
+    
+          &:before {
+            left: 0;
+          }
+    
+          &:after {
+            right: 0;
+          }
+        }
+  
+      }
+
     }
   }
-}
-
-.container .right .write {
-  position: absolute;
-  bottom: 29px;
-  left: 30px;
-  height: 42px;
-  padding-left: 8px;
-  border: 1px solid @light;
-  background-color: #eceff1;
-  width: calc(100% - 58px);
-  border-radius: 5px;
-}
-
-.container .right .write input {
-  font-size: 16px;
-  float: left;
-  width: 347px;
-  height: 40px;
-  padding: 0 10px;
-  color: @dark;
-  border: 0;
-  outline: none;
-  background-color: #eceff1;
-  font-family: "Source Sans Pro", sans-serif;
-  font-weight: 400;
-}
-
-.container .right .write .write-link.attach:before {
-  display: inline-block;
-  float: left;
-  width: 20px;
-  height: 42px;
-  content: "";
-  background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/attachment.png");
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.container .right .write .write-link.smiley:before {
-  display: inline-block;
-  float: left;
-  width: 20px;
-  height: 42px;
-  content: "";
-  background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/smiley.png");
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.container .right .write .write-link.send:before {
-  display: inline-block;
-  float: left;
-  width: 20px;
-  height: 42px;
-  margin-left: 11px;
-  content: "";
-  background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/send.png");
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.container .right .bubble {
-  font-size: 16px;
-  position: relative;
-  display: inline-block;
-  clear: both;
-  margin-bottom: 8px;
-  padding: 13px 14px;
-  vertical-align: top;
-  border-radius: 5px;
-}
-
-.container .right .bubble:before {
-  position: absolute;
-  top: 19px;
-  display: block;
-  width: 8px;
-  height: 6px;
-  content: " ";
-  transform: rotate(29deg) skew(-35deg);
-}
-
-.container .right .bubble.you {
-  float: left;
-  color: @white;
-  background-color: @blue;
-  align-self: flex-start;
-  -webkit-animation-name: slideFromLeft;
-  animation-name: slideFromLeft;
-}
-
-.container .right .bubble.you:before {
-  left: -3px;
-  background-color: @blue;
-}
-
-.container .right .bubble.me {
-  float: right;
-  color: @dark;
-  background-color: #eceff1;
-  align-self: flex-end;
-  -webkit-animation-name: slideFromRight;
-  animation-name: slideFromRight;
-}
-
-.container .right .bubble.me:before {
-  right: -3px;
-  background-color: #eceff1;
-}
-
-.container .right .conversation-start {
-  position: relative;
-  width: 100%;
-  margin-bottom: 27px;
-  text-align: center;
-}
-
-.container .right .conversation-start span {
-  font-size: 14px;
-  display: inline-block;
-  color: @grey;
-}
-
-.container .right .conversation-start span:before,
-.container .right .conversation-start span:after {
-  position: absolute;
-  top: 10px;
-  display: inline-block;
-  width: 30%;
-  height: 1px;
-  content: "";
-  background-color: @light;
-}
-
-.container .right .conversation-start span:before {
-  left: 0;
-}
-
-.container .right .conversation-start span:after {
-  right: 0;
 }
 
 @keyframes slideFromLeft {

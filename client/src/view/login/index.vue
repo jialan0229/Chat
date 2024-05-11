@@ -1,8 +1,10 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import request from '@/utils/request.js';
 
+import { _login, _register } from '@/server/auth.js'
+import { setToken } from '@/utils';
+ 
 const router = useRouter();
 const isLogin = ref(false);
 const loginState = reactive({
@@ -12,15 +14,16 @@ const loginState = reactive({
 })
 
 async function login() {
-  const resolve = await request.post('/api/auth/login', loginState)
+  const resolve = await _login(loginState);
 
   if(resolve.code == 0) {
+    setToken(resolve.data.token);
     router.push('/chat');
   }
 }
 
 function register() {
-  request.post('/api/auth/register', loginState).then(res => {
+  _register(loginState).then(res => {
     if(res.code == 0) {
       isLogin.value = !isLogin.value;
     }
