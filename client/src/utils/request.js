@@ -37,7 +37,10 @@ instance.interceptors.response.use(
       return response.data;
     }else if(code == 500) {
       message.error(msg);
-    }else {
+    }else if(code == 401) {
+      location.href = '/signin';
+      return Promise.reject(error);
+    } else {
       message.warning(msg);
     }
 

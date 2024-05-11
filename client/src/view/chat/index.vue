@@ -38,7 +38,7 @@ async function setChatScrollTop() {
 }
 
 async function getList() {
-  const res = await _getList({ userId: 1 })
+  const res = await _getList()
   if (res.code == 0) {
     res.data.forEach(i => {
       i.avatar = 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/thomas.jpg';
@@ -62,7 +62,7 @@ function initWebSocket() {
     socket = null;
   }
 
-  socket = new WebSocket(`${baseURLWs}/message/chat/list?sender_id=${1}&room=${chatState.personInfo.room}`);
+  socket = new WebSocket(`${baseURLWs}/message/chat/list?sender_id=${3}&room=${chatState.personInfo.room}`);
 
   socket.onopen = () => {
     console.log('webSocket 连接成功');
@@ -128,7 +128,7 @@ function handleSend () {
               <div class="conversation-start">
                 <span>{{ formatTime(item.created_at) }}</span>
               </div>
-                <div :class="['bubble', item.sender_id == 1 ? 'me' : 'you']"
+                <div :class="['bubble', item.sender_id == 3 ? 'me' : 'you']"
                   :style="{ '--animationDuration': ((index + 1) * 0.15) + 's' }">
                   {{ item.content }}
                 </div>

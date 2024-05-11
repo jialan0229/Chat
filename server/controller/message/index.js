@@ -1,7 +1,8 @@
 const { dbQuery } = require('../../models/dbQuery');
 
 const getList = async (req, res) => {
-  const { userId } = req.query;
+  const userId = req.user.id;
+  console.log(userId);
   const sql = ' SELECT * FROM friends WHERE friend_id = ? ORDER BY updated_at DESC'
   const result = await dbQuery(sql, [userId]);
   result.sort((a, b) => {
