@@ -1,40 +1,31 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useUsersStore } from '@/store';
 
-import { _login, _register } from '@/server/auth.js'
-import { setToken } from '@/utils';
- 
 const router = useRouter();
-const isLogin = ref(false);
+const store = useUsersStore();
+const { isLoginPage } = storeToRefs(store);
 const loginState = reactive({
   username: '',
   phone: '',
   password: ''
 })
 
-async function login() {
-  const resolve = await _login(loginState);
-
-  if(resolve.code == 0) {
-    setToken(resolve.data.token);
-    router.push('/chat');
-  }
+function login() {
+  store.login(loginState, router);
 }
 
 function register() {
-  _register(loginState).then(res => {
-    if(res.code == 0) {
-      isLogin.value = !isLogin.value;
-    }
-  }) 
+  store._register(loginState);
 }
 
 </script>
 
 <template>
   <div class="login flex_c">
-    <div :class="['container', isLogin && 'right-panel-active' ]" id="container">
+    <div :class="['container', isLoginPage && 'right-panel-active' ]" id="container">
       <div class="form-container sign-up-container">
         <form>
           <h1>Create Account</h1>
@@ -70,7 +61,7 @@ function register() {
           <div class="overlay-panel overlay-left">
             <h1>Welcome Back!</h1>
             <p>To keep connected with us please login with your personal info</p>
-            <button class="ghost" id="signIn" @click="isLogin = !isLogin">Sign In</button>
+            <button class="ghost" id="signIn" @click="isLoginPage = !isLoginPage">Sign In</button>
           </div>
           <div class="overlay-panel overlay-right">
             <h1>Hello, Friend!</h1>

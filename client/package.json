@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "main": "./electron/main.js",
   "scripts": {
-    "dev": "vite",
+    "start": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "electron:build": "vite build && electron-builder"
@@ -50,6 +50,7 @@
     "axios": "^1.6.8",
     "less": "^4.2.0",
     "less-loader": "^12.2.0",
+    "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-router": "^4.3.2"
   },

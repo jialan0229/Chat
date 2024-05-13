@@ -1,9 +1,14 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue';
+import { storeToRefs } from 'pinia';
+
+import { useUsersStore } from '@/store';
 import { _getList } from '@/server/message.js';
 import { formatTime } from '@/utils';
 import { baseURLWs } from '@/config';
 
+const store = useUsersStore();
+const { userInfo } = storeToRefs(store);
 const chatState = reactive({
   personList: [
     {
@@ -29,7 +34,7 @@ let socket = null;
 
 onMounted(() => {
   getList();
-  // initWebSocket();
+  console.log(userInfo.value);
 })
 
 async function setChatScrollTop() {
@@ -62,7 +67,7 @@ function initWebSocket() {
     socket = null;
   }
 
-  socket = new WebSocket(`${baseURLWs}/message/chat/list?sender_id=${3}&room=${chatState.personInfo.room}`);
+  socket = new WebSocket(`${baseURLWs}/message/chat/list?sender_id=${userInfo.value.id}&room=${chatState.personInfo.room}`);
 
   socket.onopen = () => {
     console.log('webSocket 连接成功');
@@ -122,13 +127,13 @@ function handleSend () {
         </div>
         <div class="right">
           <div class="main">
-            <div class="top"><span>To: <span class="name">{{ chatState.personInfo.remark }}</span></span></div>
+            <div class="top"><span class="name">{{ chatState.personInfo.remark }}</span></div>
             <div class="chat active-chat" ref="chatRef">
               <template v-for="(item, index) in chatState.messages">
               <div class="conversation-start">
                 <span>{{ formatTime(item.created_at) }}</span>
               </div>
-                <div :class="['bubble', item.sender_id == 3 ? 'me' : 'you']"
+                <div :class="['bubble', item.sender_id == userInfo.id ? 'me' : 'you']"
                   :style="{ '--animationDuration': ((index + 1) * 0.15) + 's' }">
                   {{ item.content }}
                 </div>
@@ -355,12 +360,7 @@ function handleSend () {
           padding: 15px 29px;
           background-color: #eceff1;
   
-          span {
-            font-size: 15px;
-            color: @grey;
-          }
-  
-          span .name {
+          .name {
             color: @dark;
             font-family: "Source Sans Pro", sans-serif;
             font-weight: 600;
@@ -376,7 +376,6 @@ function handleSend () {
           border-style: solid;
           border-color: @light;
           height: calc(100% - 120px);
-          justify-content: flex-end;
           flex-direction: column;
           overflow: auto;
   
