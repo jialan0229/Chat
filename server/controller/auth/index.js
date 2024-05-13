@@ -2,7 +2,7 @@ const md5 = require('md5');
 const jwt = require('jsonwebtoken');
 const { dbQuery } = require('../../models/dbQuery');
 
-const JWT_SECRET_KEY = 'your-secret-key';
+const JWT_SECRET_KEY = 'goldFlash0927';
 
 const login = async (req, res) => {
   const { username, password } = req.body;
@@ -23,7 +23,7 @@ const login = async (req, res) => {
       ...results[0]
     }
 
-    const token = jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign(payload, JWT_SECRET_KEY, { expiresIn:  7 * 24 * 60 * 60 * 1000 });
     res.json({
       code: 0,
       data: {

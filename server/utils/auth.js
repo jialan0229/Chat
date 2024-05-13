@@ -1,5 +1,5 @@
-const JWT_SECRET_KEY = 'your-secret-key';
 const jwt = require('jsonwebtoken');
+const JWT_SECRET_KEY = 'goldFlash0927';
 
 // JWT验证中间件
 function authenticateToken(req, res, next) {

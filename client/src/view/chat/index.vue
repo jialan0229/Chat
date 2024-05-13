@@ -1,6 +1,7 @@
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue';
+import { ref, reactive, onMounted, nextTick, h } from 'vue';
 import { storeToRefs } from 'pinia';
+import { CheckOutlined, SmileOutlined, UserAddOutlined } from '@ant-design/icons-vue';
 
 import { useUsersStore } from '@/store';
 import { _getList } from '@/server/message.js';
@@ -70,7 +71,6 @@ function initWebSocket() {
   socket = new WebSocket(`${baseURLWs}/message/chat/list?sender_id=${userInfo.value.id}&room=${chatState.personInfo.room}`);
 
   socket.onopen = () => {
-    console.log('webSocket 连接成功');
   }
 
   socket.onmessage = (msg) => {
@@ -113,7 +113,8 @@ function handleSend () {
         <div class="left">
           <div class="top">
             <input type="text" placeholder="Search" />
-            <a href="javascript:;" class="search"></a>
+            <a-button class="add" type="primary" shape="circle" size="large" :icon="h(UserAddOutlined)" />
+            <!-- <a href="javascript:;" class="search"></a> -->
           </div>
           <ul class="people">
             <li :class="['person', chatState.personInfo.id === item.id && 'active']"
@@ -141,10 +142,9 @@ function handleSend () {
             </div>
           </div>
           <div class="write">
-            <a href="javascript:;" class="write-link attach"></a>
             <input v-model="chatState.content" @keyup.enter="handleSend" type="text" />
-            <a href="javascript:;" class="write-link smiley"></a>
-            <a href="javascript:;" class="write-link send" @click="handleSend"></a>
+            <SmileOutlined :style="{fontSize: '18px'}" class="write-link smiley"/>
+            <CheckOutlined :style="{fontSize: '18px'}" class="write-link send" @click="handleSend"/>
           </div>
         </div>
       </div>
@@ -242,25 +242,15 @@ function handleSend () {
         outline: none;
       }
 
-      a.search {
-        display: block;
-        float: left;
-        width: 42px;
-        height: 42px;
-        margin-left: 10px;
-        border: 1px solid @light;
-        background-color: @blue;
-        background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/name-type.png");
-        background-repeat: no-repeat;
-        background-position: top 12px left 14px;
-        border-radius: 50%;
+      .add {
+        margin-left: 12px;
       }
 
       .people {
-        margin-left: -1px;
+        /* margin-left: -1px;
         border-right: 1px solid @light;
         border-left: 1px solid @light;
-        width: calc(100% + 2px);
+        width: calc(100% + 2px); */
 
         .person {
           position: relative;
@@ -402,11 +392,13 @@ function handleSend () {
         background-color: #eceff1;
         width: calc(100% - 58px);
         border-radius: 5px;
+        display: flex;
+        align-items: center;
 
         input {
           font-size: 16px;
           float: left;
-          width: 347px;
+          width: 375px;
           height: 40px;
           padding: 0 10px;
           color: @dark;
@@ -416,39 +408,18 @@ function handleSend () {
           font-family: "Source Sans Pro", sans-serif;
           font-weight: 400;
         }
-  
-        .write-link.attach:before {
-          display: inline-block;
-          float: left;
-          width: 20px;
-          height: 42px;
-          content: "";
-          background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/attachment.png");
-          background-repeat: no-repeat;
-          background-position: center;
+
+        .write-link {
+          cursor: pointer;
+          color: #888;
+
+          &:hover {
+            color: @blue;
+          }
         }
   
-        .write-link.smiley:before {
-          display: inline-block;
-          float: left;
-          width: 20px;
-          height: 42px;
-          content: "";
-          background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/smiley.png");
-          background-repeat: no-repeat;
-          background-position: center;
-        }
-  
-        .write-link.send:before {
-          display: inline-block;
-          float: left;
-          width: 20px;
-          height: 42px;
+        .write-link.send {
           margin-left: 11px;
-          content: "";
-          background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/send.png");
-          background-repeat: no-repeat;
-          background-position: center;
         }
       }
 
