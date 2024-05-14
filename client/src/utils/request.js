@@ -33,18 +33,15 @@ instance.interceptors.response.use(
   response => {
     // 任意响应都会经过这里
     const { code, msg } = response.data;
-    if(code == 0) {
-      return response.data;
-    }else if(code == 500) {
+    if(code == 500) {
       message.error(msg);
     }else if(code == 401) {
       location.href = '/login';
       return Promise.reject(error);
     } else {
-      message.warning(msg);
+      // message.warning(msg);
+      return response.data;
     }
-
-    return response.data;
   },
   error => {
     // 响应错误处理

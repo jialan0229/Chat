@@ -18,7 +18,7 @@ function login() {
 }
 
 function register() {
-  store._register(loginState);
+  store.register(loginState);
 }
 
 </script>
@@ -66,7 +66,7 @@ function register() {
           <div class="overlay-panel overlay-right">
             <h1>Hello, Friend!</h1>
             <p>Enter your personal details and start journey with us</p>
-            <button class="ghost" id="signUp" @click="isLogin = !isLogin">Sign Up</button>
+            <button class="ghost" id="signUp" @click="isLoginPage = !isLoginPage">Sign Up</button>
           </div>
         </div>
       </div>

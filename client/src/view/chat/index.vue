@@ -1,7 +1,10 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick, h } from 'vue';
 import { storeToRefs } from 'pinia';
-import { CheckOutlined, SmileOutlined, UserAddOutlined } from '@ant-design/icons-vue';
+import multiavatar from '@multiavatar/multiavatar/esm';
+import { CheckOutlined, SmileOutlined } from '@ant-design/icons-vue';
+
+import AddFriend from '@/components/AddFriend/index.vue';
 
 import { useUsersStore } from '@/store';
 import { _getList } from '@/server/message.js';
@@ -11,22 +14,7 @@ import { baseURLWs } from '@/config';
 const store = useUsersStore();
 const { userInfo } = storeToRefs(store);
 const chatState = reactive({
-  personList: [
-    {
-      id: 1,
-      avatar: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/thomas.jpg',
-      name: 'Thomas Bangalter',
-      time: '2:09 PM',
-      preview: 'I was wondering...'
-    },
-    {
-      id: 2,
-      avatar: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/dog.png',
-      name: 'Dog Woofson',
-      time: '1:44 PM',
-      preview: "I've forgotten how it felt before"
-    }
-  ],
+  personList: [],
   personInfo: {},
   messages: []
 })
@@ -35,7 +23,6 @@ let socket = null;
 
 onMounted(() => {
   getList();
-  console.log(userInfo.value);
 })
 
 async function setChatScrollTop() {
@@ -47,7 +34,8 @@ async function getList() {
   const res = await _getList()
   if (res.code == 0) {
     res.data.forEach(i => {
-      i.avatar = 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/thomas.jpg';
+      multiavatar(i.username);
+      i.avatar = `https://api.multiavatar.com/${i.username}.png`;
       i.lastMsg = 'I was wondering...'
       i.updated_at = formatTime(i.updated_at)
     })
@@ -63,7 +51,7 @@ function setAciveChat(item) {
 }
 
 function initWebSocket() {
-  if(socket) {
+  if (socket) {
     socket.close();
     socket = null;
   }
@@ -75,7 +63,7 @@ function initWebSocket() {
 
   socket.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
-    if(data instanceof Array) {
+    if (data instanceof Array) {
       chatState.messages = data;
     } else {
       chatState.messages.push(data)
@@ -90,8 +78,8 @@ function initWebSocket() {
 
 }
 
-function handleSend () {
-  if(!chatState.content) return;
+function handleSend() {
+  if (!chatState.content) return;
 
   const { user_id, friend_id, room } = chatState.personInfo;
   const sendMasgges = {
@@ -107,45 +95,42 @@ function handleSend () {
 </script>
 
 <template>
-  <div class="chat-wrap">
-    <div class="wrapper">
-      <div class="container">
-        <div class="left">
-          <div class="top">
-            <input type="text" placeholder="Search" />
-            <a-button class="add" type="primary" shape="circle" size="large" :icon="h(UserAddOutlined)" />
-            <!-- <a href="javascript:;" class="search"></a> -->
-          </div>
-          <ul class="people">
-            <li :class="['person', chatState.personInfo.id === item.id && 'active']"
-              v-for="item in chatState.personList" @click="setAciveChat(item)" data-chat="person1">
-              <img :src="item.avatar" alt="" />
-              <span class="name">{{ item.remark }}</span>
-              <span class="time">{{ item.updated_at }}</span>
-              <span class="preview">{{ item.lastMsg }}</span>
-            </li>
-          </ul>
+  <div class="wrapper">
+    <div class="container">
+      <div class="left">
+        <div class="top">
+          <input type="text" placeholder="Search" />
+          <AddFriend />
         </div>
-        <div class="right">
-          <div class="main">
-            <div class="top"><span class="name">{{ chatState.personInfo.remark }}</span></div>
-            <div class="chat active-chat" ref="chatRef">
-              <template v-for="(item, index) in chatState.messages">
+        <ul class="people">
+          <li :class="['person', chatState.personInfo.id === item.id && 'active']"
+            v-for="item in chatState.personList" @click="setAciveChat(item)" data-chat="person1">
+            <img :src="item.avatar" alt="" />
+            <span class="name">{{ item.remark }}</span>
+            <span class="time">{{ item.updated_at }}</span>
+            <span class="preview">{{ item.lastMsg }}</span>
+          </li>
+        </ul>
+      </div>
+      <div class="right">
+        <div class="main">
+          <div class="top"><span class="name">{{ chatState.personInfo.remark }}</span></div>
+          <div class="chat active-chat" ref="chatRef">
+            <template v-for="(item, index) in chatState.messages">
               <div class="conversation-start">
                 <span>{{ formatTime(item.created_at) }}</span>
               </div>
-                <div :class="['bubble', item.sender_id == userInfo.id ? 'me' : 'you']"
-                  :style="{ '--animationDuration': ((index + 1) * 0.15) + 's' }">
-                  {{ item.content }}
-                </div>
-              </template>
-            </div>
+              <div :class="['bubble', item.sender_id == userInfo.id ? 'me' : 'you']"
+                :style="{ '--animationDuration': ((index + 1) * 0.15) + 's' }">
+                {{ item.content }}
+              </div>
+            </template>
           </div>
-          <div class="write">
-            <input v-model="chatState.content" @keyup.enter="handleSend" type="text" />
-            <SmileOutlined :style="{fontSize: '18px'}" class="write-link smiley"/>
-            <CheckOutlined :style="{fontSize: '18px'}" class="write-link send" @click="handleSend"/>
-          </div>
+        </div>
+        <div class="write">
+          <input v-model="chatState.content" @keyup.enter="handleSend" type="text" />
+          <SmileOutlined :style="{ fontSize: '18px' }" class="write-link smiley" />
+          <CheckOutlined :style="{ fontSize: '18px' }" class="write-link send" @click="handleSend" />
         </div>
       </div>
     </div>
@@ -153,24 +138,7 @@ function handleSend () {
 </template>
 
 <style lang="less" scoped>
-@charset "UTF-8";
-
-*,
-*:before,
-*:after {
-  box-sizing: border-box;
-}
-
-@white: #fff;
-@black: #000;
-@bg: #f8f8f8;
-@grey: #999;
-@dark: #1a1a1a;
-@light: #e6e6e6;
-@blue: #00b0ff;
-@animationDuration: 0.5;
-
-.chat-wrap {
+.wrapper {
   width: 100%;
   height: 100%;
   background-color: @bg;
@@ -179,24 +147,16 @@ function handleSend () {
   text-rendering: optimizeLegibility;
   font-family: "Source Sans Pro", sans-serif;
   font-weight: 400;
-  background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/382994/image.jpg");
+  background-image: url("../../assets/images/chat_bg.png");
   background-size: cover;
   background-repeat: none;
-}
-
-.wrapper {
-  position: relative;
-  left: 50%;
-  width: 1000px;
-  height: 800px;
-  transform: translate(-50%, 0);
 
   .container {
     position: relative;
     top: 50%;
     left: 50%;
-    width: 80%;
-    height: 75%;
+    width: 90%;
+    height: 80%;
     background-color: @white;
     transform: translate(-50%, -50%);
 
@@ -240,10 +200,6 @@ function handleSend () {
 
       input:focus {
         outline: none;
-      }
-
-      .add {
-        margin-left: 12px;
       }
 
       .people {
@@ -349,14 +305,14 @@ function handleSend () {
           height: 47px;
           padding: 15px 29px;
           background-color: #eceff1;
-  
+
           .name {
             color: @dark;
             font-family: "Source Sans Pro", sans-serif;
             font-weight: 600;
           }
         }
-  
+
         .chat {
           position: relative;
           display: none;
@@ -368,11 +324,11 @@ function handleSend () {
           height: calc(100% - 120px);
           flex-direction: column;
           overflow: auto;
-  
+
           &.active-chat {
             display: block;
             display: flex;
-  
+
             .bubble {
               transition-timing-function: cubic-bezier(0.4, -0.04, 1, 1);
               animation-duration: var(--animationDuration);
@@ -417,7 +373,7 @@ function handleSend () {
             color: @blue;
           }
         }
-  
+
         .write-link.send {
           margin-left: 11px;
         }
@@ -443,33 +399,33 @@ function handleSend () {
           content: " ";
           transform: rotate(29deg) skew(-35deg);
         }
-  
+
         &.you {
           float: left;
-          color: @white;
-          background-color: @blue;
+          color: @dark;
+          background-color: #eceff1;
           align-self: flex-start;
           -webkit-animation-name: slideFromLeft;
           animation-name: slideFromLeft;
         }
-  
+
         &.you:before {
           left: -3px;
-          background-color: @blue;
+          background-color: #eceff1;
         }
-  
+
         &.me {
           float: right;
-          color: @dark;
-          background-color: #eceff1;
+          color: @white;
+          background-color: @blue;
           align-self: flex-end;
           -webkit-animation-name: slideFromRight;
           animation-name: slideFromRight;
         }
-  
+
         &.me:before {
           right: -3px;
-          background-color: #eceff1;
+          background-color: @blue;
         }
       }
 
@@ -484,6 +440,7 @@ function handleSend () {
           font-size: 14px;
           display: inline-block;
           color: @grey;
+
           &:before,
           &:after {
             position: absolute;
@@ -494,21 +451,22 @@ function handleSend () {
             content: "";
             background-color: @light;
           }
-    
+
           &:before {
             left: 0;
           }
-    
+
           &:after {
             right: 0;
           }
         }
-  
+
       }
 
     }
   }
 }
+
 
 @keyframes slideFromLeft {
   0% {

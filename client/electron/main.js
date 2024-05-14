@@ -25,7 +25,7 @@ const createWindow = () => {
   if (process.env.VITE_DEV_SERVER_URL) {
     win.loadURL(process.env.VITE_DEV_SERVER_URL)
     // 开启调试台
-    win.webContents.openDevTools()
+    // win.webContents.openDevTools()
   } else {
     win.loadFile(join(__dirname, '../dist/index.html'))
   }

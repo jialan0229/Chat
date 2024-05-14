@@ -1,5 +1,6 @@
 const md5 = require('md5');
 const jwt = require('jsonwebtoken');
+const multiavatar = require('@multiavatar/multiavatar');
 const { dbQuery } = require('../../models/dbQuery');
 
 const JWT_SECRET_KEY = 'goldFlash0927';
@@ -55,9 +56,10 @@ const register = async (req, res) => {
         msg: '用户名或手机号已注册'
       });
 		}
-
+    
     // 插入当前用户注册信息
     const sql_set_user = `INSERT INTO users SET ?`;
+    // const avatar = multiavatar(username);
     const user = {
 			avatar: '',
 			username,
@@ -68,7 +70,7 @@ const register = async (req, res) => {
 			salt: ''
 		};
     
-    const results = await dbQuery(sql_set_user, user);
+    await dbQuery(sql_set_user, user);
     // 查询当前用户注册信息
     const sql_get_user = `SELECT * FROM users WHERE username = ?`;
     const data = await dbQuery(sql_get_user, [username])[0];
