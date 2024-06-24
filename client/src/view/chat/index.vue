@@ -100,7 +100,7 @@ function handleSend() {
       <div class="left">
         <div class="top">
           <input type="text" placeholder="Search" />
-          <AddFriend />
+          <AddFriend @change="getList()"/>
         </div>
         <ul class="people">
           <li :class="['person', chatState.personInfo.id === item.id && 'active']"

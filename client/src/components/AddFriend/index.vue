@@ -2,8 +2,11 @@
 import { ref, computed, CSSProperties, watch, watchEffect, h } from 'vue';
 import { UserAddOutlined, UserOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons-vue';
 import { useDraggable } from '@vueuse/core';
-import { getSearchUser } from '@/server/friend';
+import { message } from 'ant-design-vue';
 
+import { getSearchUser, _addFriend } from '@/server/friend';
+
+const emit = defineEmits(['change']);
 const open = ref<boolean>(false);
 const modalTitleRef = ref<HTMLElement>(null);
 const { x, y, isDragging } = useDraggable(modalTitleRef);
@@ -81,6 +84,19 @@ const handleSearch = async () => {
     description.value = res.msg;
   }
 }
+
+const addFriend = async (item: User) => {
+  const data = {
+    id: item.id,
+    username: item.username
+  }
+
+  const res = await _addFriend(data);
+  if(res.code == 0) {
+    message.success('添加成功');
+    emit('change');
+  }
+}
 </script>
 
 <template>
@@ -96,8 +112,12 @@ const handleSearch = async () => {
     <div class="content">
       <div class="list" v-if="searchList.length">
         <div class="item" v-for="item in searchList">
-          <a-avatar shape="square" size="large" :src="item.avatar" />
-          <a-button :icon="h(PlusOutlined)" />
+          <a-tooltip :title="item.username">
+            <a-avatar shape="square" size="large" :src="item.avatar" />
+          </a-tooltip>
+          <a-tooltip :title="!item.status ? '添加好友' : '已添加该用户为好友'">
+            <a-button type="primary" :disabled="item.status" shape="circle" :icon="h(PlusOutlined)" @click="addFriend(item)" />
+          </a-tooltip>
         </div>
       </div>
       <a-empty v-else :description="description" />

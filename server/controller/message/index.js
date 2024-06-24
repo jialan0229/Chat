@@ -39,6 +39,7 @@ const getChatList = async (ws, req) => {
   ws.on('message', async (msg) => {
     const message = {
       ...JSON.parse(msg),
+      id: nanoid(),
       status: 0,
       created_at: new Date()
     };
