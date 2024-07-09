@@ -6,3 +6,13 @@ export function _getList (params) {
     params
   })
 }
+
+export function _updateStatus (id) {
+  return request({
+    url: '/message/update/status',
+    method: 'POST',
+    data: {
+      id
+    }
+  })
+}

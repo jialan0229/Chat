@@ -7,26 +7,31 @@ import { CheckOutlined, SmileOutlined } from '@ant-design/icons-vue';
 import AddFriend from '@/components/AddFriend/index.vue';
 
 import { useUsersStore } from '@/store';
-import { _getList } from '@/server/message.js';
-import { formatTime } from '@/utils';
+import { _getList, _updateStatus } from '@/server';
+import { formatTime, getUserInfo } from '@/utils';
 import { baseURLWs } from '@/config';
 
 const store = useUsersStore();
-const { userInfo } = storeToRefs(store);
+// const { userInfo } = storeToRefs(store);
+const userInfo = getUserInfo();
 const chatState = reactive({
   personList: [],
   personInfo: {},
   messages: []
 })
 const chatRef = ref(null);
-let socket = null;
+const audioRef = ref(null);
+const lastMessge = ref(null);
+// let socket = null;
 
 onMounted(() => {
   getList();
+  // audioRef.value.play();
 })
 
 async function setChatScrollTop() {
   await nextTick()
+  if(!chatRef.value) return;
   chatRef.value.scrollTop = chatRef.value.scrollHeight;
 }
 
@@ -36,8 +41,8 @@ async function getList() {
     res.data.forEach(i => {
       multiavatar(i.username);
       i.avatar = `https://api.multiavatar.com/${i.username}.png`;
-      i.lastMsg = 'I was wondering...'
       i.updated_at = formatTime(i.updated_at)
+      initWebSocket(i)
     })
 
     chatState.personList = res.data;
@@ -46,42 +51,63 @@ async function getList() {
 
 function setAciveChat(item) {
   chatState.personInfo = item;
-  initWebSocket();
+  updateStatus();
   setChatScrollTop();
 }
 
-function initWebSocket() {
-  if (socket) {
-    socket.close();
-    socket = null;
+function initWebSocket(item) {
+  if (item.socket) {
+    item.socket.close();
+    item.socket = null;
   }
 
-  socket = new WebSocket(`${baseURLWs}/message/chat/list?sender_id=${userInfo.value.id}&room=${chatState.personInfo.room}`);
+  item.socket = new WebSocket(`${baseURLWs}/message/chat/list?sender_id=${userInfo.id}&room=${item.room}`);
 
-  socket.onopen = () => {
-  }
-
-  socket.onmessage = (msg) => {
+  item.socket.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
     if (data instanceof Array) {
       chatState.messages = data;
     } else {
+      // 列表更新最新消息
+      chatState.personList.forEach(i => {
+        if(i.room === data.room) {
+          i.lastMsg = data.content
+          i.lastMsgSenderId = data.sender_id
+          i.unread ++
+          data.sender_id != userInfo.id && audioRef.value.play();
+        }
+      })
       chatState.messages.push(data)
     }
 
     setChatScrollTop();
+
+    lastMessge.value = Array.isArray(data) ? data[data.length - 1] : data;
+    updateStatus();
   }
 
-  socket.onerror = (error) => {
+  item.socket.onerror = (error) => {
     console.log('WebSocket Error:', error);
   };
+}
 
+async function updateStatus() {
+  if(lastMessge.value && lastMessge.value.sender_id != userInfo.id && !lastMessge.value.status && chatState.personInfo.id) {
+    const res = await _updateStatus(lastMessge.value.id);
+    if(res) {
+      chatState.personList.forEach(i => {
+        if(i.room === lastMessge.value.room) {
+          i.unread = 0
+        }
+      })
+    }
+  }
 }
 
 function handleSend() {
   if (!chatState.content) return;
 
-  const { user_id, friend_id, room } = chatState.personInfo;
+  const { user_id, friend_id, room, socket } = chatState.personInfo;
   const sendMasgges = {
     sender_id: friend_id,
     receiver_id: user_id,
@@ -105,35 +131,45 @@ function handleSend() {
         <ul class="people">
           <li :class="['person', chatState.personInfo.id === item.id && 'active']"
             v-for="item in chatState.personList" @click="setAciveChat(item)" data-chat="person1">
-            <img :src="item.avatar" alt="" />
+            <div class="avatar">
+              <img :src="item.avatar" alt="" />
+              <span v-if="item.lastMsgSenderId != userInfo.id && item.unread" class="unread">{{ item.unread }}</span>
+            </div>
             <span class="name">{{ item.remark }}</span>
             <span class="time">{{ item.updated_at }}</span>
+            <br>
             <span class="preview">{{ item.lastMsg }}</span>
           </li>
         </ul>
       </div>
       <div class="right">
-        <div class="main">
-          <div class="top"><span class="name">{{ chatState.personInfo.remark }}</span></div>
-          <div class="chat active-chat" ref="chatRef">
-            <template v-for="(item, index) in chatState.messages">
-              <div class="conversation-start">
-                <span>{{ formatTime(item.created_at) }}</span>
-              </div>
-              <div :class="['bubble', item.sender_id == userInfo.id ? 'me' : 'you']"
-                :style="{ '--animationDuration': ((index + 1) * 0.15) + 's' }">
-                {{ item.content }}
-              </div>
-            </template>
+        <template v-if="chatState.personInfo.id">
+          <div class="main">
+            <div class="top"><span class="name">{{ chatState.personInfo.remark }}</span></div>
+            <div class="chat active-chat" ref="chatRef">
+              <template v-for="(item, index) in chatState.messages">
+                <div class="conversation-start">
+                  <span>{{ formatTime(item.created_at) }}</span>
+                </div>
+                <div :class="['bubble', item.sender_id == userInfo.id ? 'me' : 'you']"
+                  :style="{ '--animationDuration': ((index + 1) * 0.15) + 's' }">
+                  {{ item.content }}
+                </div>
+              </template>
+            </div>
           </div>
-        </div>
-        <div class="write">
-          <input v-model="chatState.content" @keyup.enter="handleSend" type="text" />
-          <SmileOutlined :style="{ fontSize: '18px' }" class="write-link smiley" />
-          <CheckOutlined :style="{ fontSize: '18px' }" class="write-link send" @click="handleSend" />
-        </div>
+          <div class="write">
+            <input v-model="chatState.content" @keyup.enter="handleSend" type="text" />
+            <SmileOutlined :style="{ fontSize: '18px' }" class="write-link smiley" />
+            <CheckOutlined :style="{ fontSize: '18px' }" class="write-link send" @click="handleSend" />
+          </div>
+        </template>
       </div>
     </div>
+
+    <audio ref="audioRef">
+      <source src="@/assets/mp3/gramStart.mp3" type="audio/mpeg" />
+    </audio>
   </div>
 </template>
 
@@ -227,14 +263,34 @@ function handleSend() {
             transform: translate(-50%, 0);
           }
 
-          img {
+          .avatar {
             float: left;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             margin-right: 12px;
-            border-radius: 50%;
-            -o-object-fit: cover;
-            object-fit: cover;
+            position: relative;
+
+            img {
+              width: 100%;
+              height: 100%;
+              border-radius: 50%;
+              object-fit: cover;
+            }
+
+            .unread {
+              position: absolute;
+              right: -8px;
+              top: -8px;
+              width: 20px;
+              height: 20px;
+              font-size: 12px;
+              line-height: 20px;
+              text-align: center;
+              border-radius: 10px;
+              color: #fff;
+              background-color: #fa5151;
+              z-index: 9;
+            }
           }
 
           .name {
@@ -263,6 +319,7 @@ function handleSend() {
             white-space: nowrap;
             text-overflow: ellipsis;
             color: @grey;
+            padding-top: 8px;
           }
 
           &.active,
@@ -354,7 +411,7 @@ function handleSend() {
         input {
           font-size: 16px;
           float: left;
-          width: 375px;
+          width: calc(100% - 60px);
           height: 40px;
           padding: 0 10px;
           color: @dark;

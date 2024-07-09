@@ -19,8 +19,7 @@ const createWindow = () => {
       enableRemoteModule: true, // 可以使用remote方法
     },
   })
-
-  // win.loadURL('http://localhost:3000')
+  
   // development模式
   if (process.env.VITE_DEV_SERVER_URL) {
     win.loadURL(process.env.VITE_DEV_SERVER_URL)

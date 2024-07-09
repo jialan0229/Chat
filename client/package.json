@@ -1,7 +1,7 @@
 {
   "name": "electron-desktop-tool",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.1",
   "main": "./electron/main.js",
   "scripts": {
     "start": "vite",
@@ -10,7 +10,7 @@
     "electron:build": "vite build && electron-builder"
   },
   "build": {
-    "productName": "ElectronDeskTopTool",
+    "productName": "Chat0927",
     "appId": "dyy.dongyuanwai",
     "copyright": "dyy.dongyuanwai © 2024",
     "compression": "maximum",
@@ -25,11 +25,11 @@
       "deleteAppDataOnUninstall": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "ElectronDeskTopTool"
+      "shortcutName": "Chat"
     },
     "win": {
       "icon": "./public/logo.ico",
-      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}",
+      "artifactName": "${productName}-v${version}-setup.${ext}",
       "target": [
         {
           "target": "nsis"
@@ -38,11 +38,11 @@
     },
     "mac": {
       "icon": "./public/logo.ico",
-      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}"
+      "artifactName": "${productName}-v${version}-setup.${ext}"
     },
     "linux": {
       "icon": "./public/logo.ico",
-      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}"
+      "artifactName": "${productName}-v${version}-setup.${ext}"
     }
   },
   "dependencies": {

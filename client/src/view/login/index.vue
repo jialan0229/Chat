@@ -30,30 +30,42 @@ function register() {
         <form>
           <h1>Create Account</h1>
           <div class="social-container">
-            <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
-            <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social">
+              <img src="@/assets/images/wechat.svg" alt="">
+            </a>
+            <a href="#" class="social">
+              <img src="@/assets/images/GitHub.svg" alt="">
+            </a>
+            <a href="#" class="social">
+              <img src="@/assets/images/chrome.svg" alt="">
+            </a>
           </div>
           <span>or use your email for registration</span>
           <input v-model="loginState.username" type="text" placeholder="Name" />
           <input v-model="loginState.phone" type="phone" placeholder="Phone" />
           <input v-model="loginState.password" type="password" placeholder="Password" />
-          <button @click="register">Sign Up</button>
+          <button @click.prevent="register">Sign Up</button>
         </form>
       </div>
       <div class="form-container sign-in-container">
         <form>
           <h1>Sign in</h1>
           <div class="social-container">
-            <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
-            <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social">
+              <img src="@/assets/images/wechat.svg" alt="">
+            </a>
+            <a href="#" class="social">
+              <img src="@/assets/images/GitHub.svg" alt="">
+            </a>
+            <a href="#" class="social">
+              <img src="@/assets/images/chrome.svg" alt="">
+            </a>
           </div>
           <span>or use your account</span>
           <input v-model="loginState.username" type="text" placeholder="Name" required />
           <input v-model="loginState.password" type="password" placeholder="Password" required />
           <a href="#">Forgot your password?</a>
-          <button @click="login">Sign In</button>
+          <button @click.prevent="login">Sign In</button>
         </form>
       </div>
       <div class="overlay-container">
@@ -75,7 +87,7 @@ function register() {
 </template>
 
 <style lang="less" scoped>
-@import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
+// @import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
 
 * {
   box-sizing: border-box;
@@ -299,6 +311,11 @@ input {
   height: 40px;
   width: 40px;
 }
+
+.social-container a img {
+  width: 100%;
+  height: 100%;
+} 
 
 footer {
   background-color: #222;

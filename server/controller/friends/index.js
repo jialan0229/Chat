@@ -1,6 +1,10 @@
 const { dbQuery } = require('../../models/dbQuery');
-const { ResData, ResWarning, ResError } = require('../../utils/resp');
-const { nanoid } = require('../../utils/nanoid');
+const { 
+  nanoid, 
+  ResData, 
+  ResWarning, 
+  ResError 
+} = require('../../utils/index');
 
 const getList = (req, res) => {
   ResData(res);

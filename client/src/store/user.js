@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
+import { message } from 'ant-design-vue';
 
 import { _login, _register } from '@/server/auth.js'
-import { setToken } from '@/utils';
+import { setToken, setUserInfo } from '@/utils';
 
 export const useUsersStore = defineStore('users', {
   state: () => ({
@@ -15,13 +16,18 @@ export const useUsersStore = defineStore('users', {
       if(resolve.code == 0) {
         this.userInfo = resolve.data;
         setToken(resolve.data.token);
+        setUserInfo(resolve.data)
         router.push('/chat')
+      } else {
+        message.info(resolve.msg)
       }
     },
     async register(loginState) {
       const resolve = await _register(loginState);
       if(resolve.code == 0) {
         this.isLoginPage = !this.isLoginPage
+      } else {
+        message.info(resolve.msg)
       }
     }
   }
