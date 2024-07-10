@@ -31,7 +31,6 @@ function initUserTable() {
   )`;
   db.query(createUserTable, (err, result, fields) => {
     if (err) throw err;
-    console.log('用户表创建成功');
     initFriendTable();
     initMessageTable();
   })
@@ -54,7 +53,6 @@ function initFriendTable() {
   )`;
   db.query(createFriendTable, (err, result, fields) => {
     if (err) throw err;
-    console.log('好友表创建成功');
   })
 }
 
@@ -74,7 +72,6 @@ function initMessageTable() {
   )`;
   db.query(createMessageTable, (err, result, fields) => {
     if (err) throw err;
-    console.log('聊天记录表创建成功');
   })
 }
 

@@ -1,5 +1,7 @@
 <script setup>
-import { ref, reactive, onMounted, nextTick, h } from 'vue';
+import { ref, reactive, onMounted, nextTick } from 'vue';
+import V3Emoji from 'vue3-emoji'
+import 'vue3-emoji/dist/style.css'
 import { storeToRefs } from 'pinia';
 import multiavatar from '@multiavatar/multiavatar/esm';
 import { CheckOutlined, SmileOutlined } from '@ant-design/icons-vue';
@@ -15,23 +17,61 @@ const store = useUsersStore();
 // const { userInfo } = storeToRefs(store);
 const userInfo = getUserInfo();
 const chatState = reactive({
+  content: '',
   personList: [],
   personInfo: {},
   messages: []
 })
 const chatRef = ref(null);
 const audioRef = ref(null);
-const lastMessge = ref(null);
-// let socket = null;
+const inputRef = ref(null);
+const emojiPickerRef = ref(null);
+const optionsName = {
+  'Smileys & Emotion': '笑脸&表情',
+  'Food & Drink': '食物&饮料',
+  'Animals & Nature': '动物&自然',
+  'Travel & Places': '旅行&地点',
+  'People & Body': '人物&身体',
+  Objects: '物品',
+  Symbols: '符号',
+  Flags: '旗帜',
+  Activities: '活动'
+};
 
 onMounted(() => {
   getList();
   // audioRef.value.play();
 })
 
+function appendText(val) {
+  console.log(val);
+  const { selectionStart, selectionEnd } = inputRef.value;
+  let endIndex = 0;
+  if (chatState.content != '') {
+    if (selectionStart === selectionEnd) {
+      let chars = [...chatState.content];
+      chars.splice(inputRef.value.selectionStart, 0, val);
+      chatState.content = chars.join('');
+    } else {
+      let oldStr = chatState.content.slice(selectionStart, selectionEnd);
+      endIndex = -(oldStr.length - 1)
+      chatState.content = chatState.content.replace(oldStr, val)
+    }
+  } else {
+    chatState.content += val
+  }
+  emojiPickerRef.value.closePop();
+
+  setTimeout(() => {
+    // 设置光标位置
+    inputRef.value.focus()
+    endIndex && inputRef.value.setSelectionRange(selectionStart + 1, selectionEnd + endIndex)
+  })
+};
+
 async function setChatScrollTop() {
   await nextTick()
-  if(!chatRef.value) return;
+  if (!chatRef.value) return;
   chatRef.value.scrollTop = chatRef.value.scrollHeight;
 }
 
@@ -50,8 +90,8 @@ async function getList() {
 }
 
 function setAciveChat(item) {
+  chatState.content = ''
   chatState.personInfo = item;
-  // debugger
   updateStatus();
   setChatScrollTop();
 }
@@ -71,10 +111,10 @@ function initWebSocket(item) {
     } else {
       // 列表更新最新消息
       chatState.personList.forEach(i => {
-        if(i.room === data.room) {
+        if (i.room === data.room) {
           i.lastMsg = data.content
           i.lastMsgSenderId = data.sender_id
-          i.unread ++
+          i.unread++
           data.sender_id != userInfo.id && audioRef.value.play();
         }
       })
@@ -83,8 +123,8 @@ function initWebSocket(item) {
 
     setChatScrollTop();
 
-    lastMessge.value = Array.isArray(data) ? data[data.length - 1] : data;
-    console.log(data);
+    item.lastMessge = Array.isArray(data) ? data[data.length - 1] : data;
+    console.log(item.lastMessge);
     updateStatus();
   }
 
@@ -94,11 +134,16 @@ function initWebSocket(item) {
 }
 
 async function updateStatus() {
-  if(lastMessge.value && lastMessge.value.sender_id != userInfo.id && !lastMessge.value.status && chatState.personInfo.id) {
-    const res = await _updateStatus(lastMessge.value.id);
-    if(res) {
+  if (!chatState.personInfo.lastMessge) return;
+
+  const { sender_id, status, room } = chatState.personInfo.lastMessge;
+  const flag = sender_id != userInfo.id && !status && chatState.personInfo.id;
+
+  if (flag) {
+    const res = await _updateStatus(room);
+    if (res) {
       chatState.personList.forEach(i => {
-        if(i.room === lastMessge.value.room) {
+        if (i.room === room) {
           i.unread = 0
         }
       })
@@ -128,11 +173,11 @@ function handleSend() {
       <div class="left">
         <div class="top">
           <input type="text" placeholder="Search" />
-          <AddFriend @change="getList()"/>
+          <AddFriend @change="getList()" />
         </div>
         <ul class="people">
-          <li :class="['person', chatState.personInfo.id === item.id && 'active']"
-            v-for="item in chatState.personList" @click="setAciveChat(item)" data-chat="person1">
+          <li :class="['person', chatState.personInfo.id === item.id && 'active']" v-for="item in chatState.personList"
+            @click="setAciveChat(item)" data-chat="person1">
             <div class="avatar">
               <img :src="item.avatar" alt="" />
               <span v-if="item.lastMsgSenderId != userInfo.id && item.unread" class="unread">{{ item.unread }}</span>
@@ -144,6 +189,7 @@ function handleSend() {
           </li>
         </ul>
       </div>
+
       <div class="right">
         <template v-if="chatState.personInfo.id">
           <div class="main">
@@ -161,8 +207,12 @@ function handleSend() {
             </div>
           </div>
           <div class="write">
-            <input v-model="chatState.content" @keyup.enter="handleSend" type="text" />
-            <SmileOutlined :style="{ fontSize: '18px' }" class="write-link smiley" />
+            <input ref="inputRef" v-model="chatState.content" @keyup.enter="handleSend" type="text" />
+            <div class="write-link smiley">
+              <V3Emoji ref="emojiPickerRef" @click-emoji="appendText" :recent="true" :optionsName="optionsName">
+                <SmileOutlined :style="{ fontSize: '18px' }" />
+              </V3Emoji>
+            </div>
             <CheckOutlined :style="{ fontSize: '18px' }" class="write-link send" @click="handleSend" />
           </div>
         </template>
@@ -526,19 +576,7 @@ function handleSend() {
 
 @keyframes slideFromLeft {
   0% {
-    margin-left: -200px;
-    opacity: 0;
-  }
-
-  100% {
-    margin-left: 0;
-    opacity: 1;
-  }
-}
-
-@-webkit-keyframes slideFromLeft {
-  0% {
-    margin-left: -200px;
+    margin-left: -50px;
     opacity: 0;
   }
 
@@ -550,19 +588,7 @@ function handleSend() {
 
 @keyframes slideFromRight {
   0% {
-    margin-right: -200px;
-    opacity: 0;
-  }
-
-  100% {
-    margin-right: 0;
-    opacity: 1;
-  }
-}
-
-@-webkit-keyframes slideFromRight {
-  0% {
-    margin-right: -200px;
+    margin-right: -50px;
     opacity: 0;
   }
 

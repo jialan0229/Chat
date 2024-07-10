@@ -4,5 +4,6 @@ module.exports = {
   user: 'root',
   password: 'dzp0229.',
   database: 'chat',
+  charset: 'utf8mb4',
   multipleStatements: true // 是否执行多条sql语句
 }

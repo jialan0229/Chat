@@ -31,7 +31,7 @@ const searchUsername = async (req, res) => {
       const sql = `SELECT * FROM friends WHERE user_id=?`;
       const userFriendList = await dbQuery(sql, [id]);
       searchList.forEach(item => {
-        userFriendList.forEach(friendItem => {
+        userFriendList.forEach(async friendItem => {
           if (item.id == friendItem.friend_id) {
             // 已添加此用户为好友
             item.status = 1;
@@ -74,6 +74,24 @@ const addFriend = async (req, res) => {
 
     const results = await addFriendSQL(object);
     const results2 = await addFriendSQL(object2);
+    
+    const message = {
+      id: nanoid(),
+      sender_id: user.id,
+      receiver_id: id,
+      room,
+      content: '我已添加你为好友，现在我们可以开始聊天了！！！',
+      status: 0,
+      created_at: new Date()
+    };
+
+    const sqlInset = `INSERT INTO messages set ?`;
+    await dbQuery(sqlInset, message);
+    // for (const key in rooms[message.room]) {
+    //   // 给接受者/发送者 发送消息
+    //   rooms[room][key].send(JSON.stringify(message))
+    // }
+
     if (results.affectedRows && results2.affectedRows) {
       ResData(res, object);
     }else {

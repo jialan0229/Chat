@@ -13,7 +13,7 @@ const getList = async (req, res) => {
     console.log(userId);
     const sql = 'SELECT * FROM friends WHERE friend_id = ? ORDER BY updated_at DESC'
     const result = await dbQuery(sql, [userId]);
-    /* result.sort((a, b) => {
+    result.sort((a, b) => {
       let t1 = new Date(a.updated_at).getTime()
       let t2 = new Date(b.updated_at).getTime()
       if (t1 < t2) {
@@ -23,7 +23,8 @@ const getList = async (req, res) => {
       } else {
         return 0; // a 和 b 相等，位置不变
       }
-    }); */
+    });
+    
     for (let i = 0; i < result.length; i++) {
       let sql = `SELECT content, sender_id FROM messages WHERE room=? ORDER BY created_at DESC LIMIT 1;`
       let sql2 = `SELECT * FROM messages WHERE status=0 AND room=?;`
@@ -36,6 +37,7 @@ const getList = async (req, res) => {
 
     ResData(res, result)
   } catch (error) {
+    console.log(error);
     ResError(res)
   }
 }
@@ -70,12 +72,12 @@ const getChatList = async (ws, req) => {
 
 const updateStatus = async (req, res) => {
   try {
-    const { id } = req.body;
-    if(!id) {
+    const { room } = req.body;
+    if(!room) {
       return ResWarning(res, '参数错误', 4000)
     }
-    const sql = `UPDATE messages SET status = 1 WHERE id = ?`
-    const result = await dbQuery(sql, [id]);
+    const sql = `UPDATE messages SET status = 1 WHERE status = 0 AND room = ?`
+    const result = await dbQuery(sql, [room]);
     if(result.changedRows) {
       ResData(res);
     } else {

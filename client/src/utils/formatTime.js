@@ -13,15 +13,12 @@ export function formatTime(time) {
   // 获取月份（0-11表示1-12月），日期，小时，分钟和秒
   const month = zeroFill(date.getMonth() + 1); // getMonth() 返回的月份是从0开始的
   const day = zeroFill(date.getDate());
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const seconds = date.getSeconds();
+  const hours = zeroFill(date.getHours());
+  const minutes = zeroFill(date.getMinutes());
+  const seconds = zeroFill(date.getSeconds());
 
   // 转换为所需的格式：月-日 时分秒
-  // 确保月和日是两位数
-  const formattedDate = `${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-  return formattedDate;
+  return `${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 
