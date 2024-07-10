@@ -10,8 +10,8 @@ const createWindow = () => {
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
-    title: 'webscoket聊天室',
-    // icon: join(__dirname, '../public/logo.png'),
+    title: 'Chat',
+    icon: join(__dirname, '../public/vite.svg'),
     webPreferences: {
       // 书写渲染进程中的配置
       nodeIntegration: true, //开启true这一步很重要,目的是为了vue文件中可以引入node和electron相关的API

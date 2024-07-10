@@ -51,6 +51,7 @@ async function getList() {
 
 function setAciveChat(item) {
   chatState.personInfo = item;
+  // debugger
   updateStatus();
   setChatScrollTop();
 }
@@ -83,6 +84,7 @@ function initWebSocket(item) {
     setChatScrollTop();
 
     lastMessge.value = Array.isArray(data) ? data[data.length - 1] : data;
+    console.log(data);
     updateStatus();
   }
 
@@ -177,15 +179,12 @@ function handleSend() {
 .wrapper {
   width: 100%;
   height: 100%;
-  background-color: @bg;
+  // background-color: @bg;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-family: "Source Sans Pro", sans-serif;
   font-weight: 400;
-  background-image: url("../../assets/images/chat_bg.png");
-  background-size: cover;
-  background-repeat: none;
 
   .container {
     position: relative;

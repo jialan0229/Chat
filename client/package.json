@@ -1,5 +1,5 @@
 {
-  "name": "electron-desktop-tool",
+  "name": "chat",
   "private": true,
   "version": "1.0.1",
   "main": "./electron/main.js",
