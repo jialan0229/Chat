@@ -7,12 +7,12 @@ export function _getList (params) {
   })
 }
 
-export function _updateStatus (id) {
+export function _updateStatus (room) {
   return request({
     url: '/message/update/status',
     method: 'POST',
     data: {
-      id
+      room
     }
   })
 }
