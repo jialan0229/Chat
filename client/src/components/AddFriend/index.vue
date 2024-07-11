@@ -8,7 +8,7 @@ import { getSearchUser, _addFriend } from '@/server/friend';
 
 const emit = defineEmits(['change']);
 const open = ref<boolean>(false);
-const modalTitleRef = ref<HTMLElement>(null);
+const modalTitleRef = ref<HTMLElement | null>(null);
 const { x, y, isDragging } = useDraggable(modalTitleRef);
 const startX = ref<number>(0);
 const startY = ref<number>(0);
@@ -31,6 +31,8 @@ const searchList = ref<User[]>([]);
 
 watch([x, y], () => {
   if (!startedDrag.value) {
+    if(!modalTitleRef.value) return;
+    
     startX.value = x.value;
     startY.value = y.value;
     const bodyRect = document.body.getBoundingClientRect();

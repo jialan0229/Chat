@@ -28,7 +28,7 @@
       "shortcutName": "Chat"
     },
     "win": {
-      "icon": "./public/logo.ico",
+      "icon": "./public/logo.png",
       "artifactName": "${productName}-v${version}-setup.${ext}",
       "target": [
         {
@@ -37,11 +37,11 @@
       ]
     },
     "mac": {
-      "icon": "./public/logo.ico",
+      "icon": "./public/logo.png",
       "artifactName": "${productName}-v${version}-setup.${ext}"
     },
     "linux": {
-      "icon": "./public/logo.ico",
+      "icon": "./public/logo.png",
       "artifactName": "${productName}-v${version}-setup.${ext}"
     }
   },

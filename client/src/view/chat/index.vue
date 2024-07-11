@@ -4,7 +4,6 @@ import V3Emoji from 'vue3-emoji'
 import 'vue3-emoji/dist/style.css'
 import { storeToRefs } from 'pinia';
 import multiavatar from '@multiavatar/multiavatar/esm';
-import { CheckOutlined, SmileOutlined } from '@ant-design/icons-vue';
 
 import AddFriend from '@/components/AddFriend/index.vue';
 
@@ -107,7 +106,7 @@ function initWebSocket(item) {
   item.socket.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
     if (data instanceof Array) {
-      chatState.messages = data;
+      item.messages = data;
     } else {
       // 列表更新最新消息
       chatState.personList.forEach(i => {
@@ -118,13 +117,12 @@ function initWebSocket(item) {
           data.sender_id != userInfo.id && audioRef.value.play();
         }
       })
-      chatState.messages.push(data)
+      item.messages.push(data)
     }
 
     setChatScrollTop();
 
     item.lastMessge = Array.isArray(data) ? data[data.length - 1] : data;
-    console.log(item.lastMessge);
     updateStatus();
   }
 
@@ -165,6 +163,15 @@ function handleSend() {
   socket.send(JSON.stringify(sendMasgges));
   chatState.content = ''
 }
+
+function handleCallWindow(type, title) {
+  const options = {
+    type,
+    title,
+  }
+
+  electronAPI.callWindow(options)
+}
 </script>
 
 <template>
@@ -195,7 +202,7 @@ function handleSend() {
           <div class="main">
             <div class="top"><span class="name">{{ chatState.personInfo.remark }}</span></div>
             <div class="chat active-chat" ref="chatRef">
-              <template v-for="(item, index) in chatState.messages">
+              <template v-for="(item, index) in chatState.personInfo.messages">
                 <div class="conversation-start">
                   <span>{{ formatTime(item.created_at) }}</span>
                 </div>
@@ -207,13 +214,38 @@ function handleSend() {
             </div>
           </div>
           <div class="write">
-            <input ref="inputRef" v-model="chatState.content" @keyup.enter="handleSend" type="text" />
-            <div class="write-link smiley">
+            <div class="write-link">
+              <img 
+                src="@/assets/images/phone.png"
+                alt="表情包" 
+                @click="handleCallWindow(1, '语音通话')"
+              >
+            </div>
+            <div class="write-link ml10">
+              <img 
+                src="@/assets/images/video.png" 
+                alt="表情包" 
+                @click="handleCallWindow(2, '视频通话')"
+                >
+            </div>
+
+            <input 
+              class="ml10" 
+              type="text" 
+              ref="inputRef" 
+              v-model="chatState.content" 
+              @keyup.enter="handleSend" 
+              placeholder="唠会！"
+            />
+
+            <div class="write-link ml10">
               <V3Emoji ref="emojiPickerRef" @click-emoji="appendText" :recent="true" :optionsName="optionsName">
-                <SmileOutlined :style="{ fontSize: '18px' }" />
+                <img src="@/assets/images/emoji.png" alt="表情包">
               </V3Emoji>
             </div>
-            <CheckOutlined :style="{ fontSize: '18px' }" class="write-link send" @click="handleSend" />
+            <div class="write-link ml10">
+              <img src="@/assets/images/send.png" alt="表情包" @click="handleSend">
+            </div>
           </div>
         </template>
       </div>
@@ -404,7 +436,7 @@ function handleSend() {
 
       .main {
         width: 100%;
-        height: 100%;
+        height: calc(100% - 72px);
 
         .top {
           width: 100%;
@@ -427,7 +459,7 @@ function handleSend() {
           border-width: 1px 1px 1px 0;
           border-style: solid;
           border-color: @light;
-          height: calc(100% - 120px);
+          height: calc(100% - 50px);
           flex-direction: column;
           overflow: auto;
 
@@ -447,21 +479,18 @@ function handleSend() {
       .write {
         position: absolute;
         bottom: 15px;
-        left: 30px;
+        left: 10px;
         height: 42px;
         padding-left: 8px;
-        border: 1px solid @light;
-        background-color: #eceff1;
-        width: calc(100% - 58px);
+        width: calc(100% - 20px);
         border-radius: 5px;
         display: flex;
         align-items: center;
 
         input {
+          width: 100%;
+          height: 42px;
           font-size: 16px;
-          float: left;
-          width: calc(100% - 60px);
-          height: 40px;
           padding: 0 10px;
           color: @dark;
           border: 0;
@@ -469,20 +498,21 @@ function handleSend() {
           background-color: #eceff1;
           font-family: "Source Sans Pro", sans-serif;
           font-weight: 400;
+          border-radius: 5px;
         }
 
         .write-link {
+          width: 25px;
+          height: 25px;
           cursor: pointer;
-          color: #888;
 
-          &:hover {
-            color: @blue;
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
           }
         }
 
-        .write-link.send {
-          margin-left: 11px;
-        }
       }
 
 
