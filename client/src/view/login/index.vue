@@ -30,15 +30,15 @@ function register() {
         <form>
           <h1>Create Account</h1>
           <div class="social-container">
-            <a href="#" class="social">
+            <!-- <a href="#" class="social">
               <img src="@/assets/images/wechat.svg" alt="">
-            </a>
+            </a> -->
             <a href="#" class="social">
-              <img src="@/assets/images/GitHub.svg" alt="">
+              <img src="@/assets/svg/GitHub.svg" alt="">
             </a>
-            <a href="#" class="social">
+            <!-- <a href="#" class="social">
               <img src="@/assets/images/chrome.svg" alt="">
-            </a>
+            </a> -->
           </div>
           <span>or use your email for registration</span>
           <input v-model="loginState.username" type="text" placeholder="Name" />
@@ -51,15 +51,15 @@ function register() {
         <form>
           <h1>Sign in</h1>
           <div class="social-container">
-            <a href="#" class="social">
+            <!-- <a href="#" class="social">
               <img src="@/assets/images/wechat.svg" alt="">
-            </a>
+            </a> -->
             <a href="#" class="social">
-              <img src="@/assets/images/GitHub.svg" alt="">
+              <img src="@/assets/svg/GitHub.svg" alt="">
             </a>
-            <a href="#" class="social">
+            <!-- <a href="#" class="social">
               <img src="@/assets/images/chrome.svg" alt="">
-            </a>
+            </a> -->
           </div>
           <span>or use your account</span>
           <input v-model="loginState.username" type="text" placeholder="Name" required />

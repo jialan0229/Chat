@@ -43,7 +43,6 @@ onMounted(() => {
 })
 
 function appendText(val) {
-  console.log(val);
   const { selectionStart, selectionEnd } = inputRef.value;
   let endIndex = 0;
   if (chatState.content != '') {
@@ -114,7 +113,16 @@ function initWebSocket(item) {
           i.lastMsg = data.content
           i.lastMsgSenderId = data.sender_id
           i.unread++
-          data.sender_id != userInfo.id && audioRef.value.play();
+          
+          if(data.sender_id != userInfo.id) {
+            audioRef.value.play();
+            const options = {
+              title: `Chat收到一条消息！！！`,
+              body: data.content,
+            }
+
+            electronAPI.notificationText(options)
+          }
         }
       })
       item.messages.push(data)
@@ -152,7 +160,7 @@ async function updateStatus() {
 function handleSend() {
   if (!chatState.content) return;
 
-  const { user_id, friend_id, room, socket } = chatState.personInfo;
+  const { user_id, friend_id, room, socket, remark } = chatState.personInfo;
   const sendMasgges = {
     sender_id: friend_id,
     receiver_id: user_id,
@@ -217,14 +225,14 @@ function handleCallWindow(type, title) {
             <div class="write-link">
               <img 
                 src="@/assets/images/phone.png"
-                alt="表情包" 
+                alt="语音通话" 
                 @click="handleCallWindow(1, '语音通话')"
               >
             </div>
             <div class="write-link ml10">
               <img 
                 src="@/assets/images/video.png" 
-                alt="表情包" 
+                alt="视频通话" 
                 @click="handleCallWindow(2, '视频通话')"
                 >
             </div>
@@ -282,7 +290,6 @@ function handleCallWindow(type, title) {
       width: 37.6%;
       height: 100%;
       border: 1px solid @light;
-      background-color: @white;
 
       .top {
         position: relative;
@@ -304,8 +311,7 @@ function handleCallWindow(type, title) {
       }
 
       input {
-        float: left;
-        width: 188px;
+        width: calc(100% - 60px);
         height: 42px;
         padding: 0 15px;
         border: 1px solid @light;

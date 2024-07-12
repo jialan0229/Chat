@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain  } = require('electron')
+const { app, BrowserWindow, ipcMain, Notification, nativeImage  } = require('electron')
 const { resolve } = require('path')
 
 // 屏蔽安全警告
@@ -59,13 +59,25 @@ const readFile = () => {
   // 读取文件操作
 }
 
+const showNotificationText = (event, _options) => {
+  const icon = nativeImage.createFromPath('src/assets/images/msg.png')
+  const options = {
+    ..._options,
+    icon
+  }
+
+  new Notification(options).show()
+}
+
 // Electron 会在初始化后并准备
 app.whenReady().then(() => {
   // 单向通信
   ipcMain.on('call-window', handleCallWindow)
   // 双向通信
   ipcMain.handle('file-read', readFile)
+  ipcMain.on('notification-text', showNotificationText);
 
+  createWindow()
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
